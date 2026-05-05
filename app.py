@@ -110,7 +110,10 @@ def load_and_process_data():
             
             # Normalización
             df_raw['speaker_std'] = df_raw['SPEAKER'].str.strip().str.title()
-            df_raw['session_uid'] = df_raw['LARGADA'].astype(str) + "_" + df_raw['FECHA'].astype(str) + "_" + df_//raw['TEMA'].astype(str)
+            
+            # CORRECCIÓN AQUÍ: Se eliminó el error de escritura 'df_//raw'
+            df_raw['session_uid'] = df_raw['LARGADA'].astype(str) + "_" + df_raw['FECHA'].astype(str) + "_" + df_raw['TEMA'].astype(str)
+            
             df_raw['fecha'] = pd.to_datetime(df_raw['FECHA'], dayfirst=True, errors='coerce')
             
             # Speaker Score Global
@@ -118,7 +121,13 @@ def load_and_process_data():
             for col in skill_cols:
                 if col in df_raw.columns:
                     df_raw[col] = df_raw[col].astype(str).str.replace('%', '').astype(float)
-            df_raw['speaker_score_global_pts'] = df_raw[skill_cols].mean(axis=1)
+            
+            # Evitar error si no existen las columnas de skills
+            available_skills = [c for c in skill_cols if c in df_raw.columns]
+            if available_skills:
+                df_raw['speaker_score_global_pts'] = df_raw[available_skills].mean(axis=1)
+            else:
+                df_raw['speaker_score_global_pts'] = 0
 
             # Flags de Calidad
             df_raw['flag_response_gt_100'] = np.where(df_raw['% DE RESPUESTAS'] > 1.0, "REVISAR", "OK")
